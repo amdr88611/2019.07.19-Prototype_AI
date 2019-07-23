@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class EnemySight : MonoBehaviour
 {
-    EnemyAI AI;
+    EnemyAI2 AI;
 
     void Start()
     {
-        AI = GetComponentInParent<EnemyAI>();   
+        AI = GetComponentInParent<EnemyAI2>();   
     }
 
  
