@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class EnemySight : MonoBehaviour
 {
-    EnemyAI2 AI;
+    EnemyAI AI;
 
     void Start()
     {
-        AI = GetComponentInParent<EnemyAI2>();   
+        AI = GetComponentInParent<EnemyAI>();   
     }
 
  
@@ -19,9 +19,11 @@ public class EnemySight : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (AI.CurTarget == null)
-        if(other.GetComponent<Player>())
+        if(other.CompareTag("Player"))
         {
                 AI.CurTarget = other.transform;
-        }
+                AI.EnemyStatus = EnemyAI.Enemy.Run;
+
+            }
     }
 }

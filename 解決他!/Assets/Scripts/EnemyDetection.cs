@@ -8,12 +8,12 @@ public class EnemyDetection : MonoBehaviour
     public float ViewAngle = 120f; //視野角度
     private Collider[] SpottedPlayer; //附近的玩家
 
-    EnemyAI2 AI;
+    EnemyAI AI;
 
 
     void Start()
     {
-        AI = GetComponentInParent<EnemyAI2>();
+        AI = GetComponentInParent<EnemyAI>();
 
     }
     private void FixedUpdate()
@@ -53,8 +53,10 @@ public class EnemyDetection : MonoBehaviour
     void DiscoveredPlayer(Collider Enemy) //發現玩家
     {
         if (AI.CurTarget == null)
-                AI.CurTarget = Enemy.transform;
-
-        Debug.Log("發現敵軍:" + Enemy.gameObject.name);
+        {
+            AI.CurTarget = Enemy.transform;
+            AI.EnemyStatus = EnemyAI.Enemy.Run;
+        }
+        //Debug.Log("發現敵軍:" + Enemy.gameObject.name);
     }
 }

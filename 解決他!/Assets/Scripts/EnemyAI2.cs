@@ -111,8 +111,7 @@ public class EnemyAI2 : MonoBehaviour
     }
     public void AttackEventsStart()
     {
-        print("123");
-        StopRotating = true;
+        //StopRowtating = true;
         DamageCollider.GetComponent<BoxCollider>().enabled = true;
     }
     public void AttackEventsEnd()

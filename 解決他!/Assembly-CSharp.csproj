@@ -61,6 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\AI.cs" />
+    <Compile Include="Assets\Scripts\AITest.cs" />
     <Compile Include="Assets\Scripts\Cam.cs" />
     <Compile Include="Assets\Scripts\DamageScript.cs" />
     <Compile Include="Assets\Scripts\EnemyAI.cs" />
