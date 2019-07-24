@@ -45,18 +45,23 @@ public class EnemyDetection : MonoBehaviour
                 {
                     DiscoveredPlayer(SpottedPlayer[i]);
                 }
+                else
+                {
+                    //玩家離開視線範圍 放棄追逐
+                    AI.Player = null;
+                }
             }
         }
     }
 
+    //DiscoveredPlayer和GiveUpChasing可以統整為一個function 一個進入一個離開
 
-    void DiscoveredPlayer(Collider Enemy) //發現玩家
+    void DiscoveredPlayer(Collider Player) //發現玩家
     {
-        if (AI.CurTarget == null)
+        if (AI.Player == null)
         {
-            AI.CurTarget = Enemy.transform;
-            AI.EnemyStatus = EnemyAI.Enemy.Run;
+            AI.Player = Player.transform;
+            AI.EnemyStatus = EnemyAI.Enemy.Alert;
         }
-        //Debug.Log("發現敵軍:" + Enemy.gameObject.name);
     }
 }

@@ -8,9 +8,11 @@ public class EnemyAI : MonoBehaviour
     public enum Enemy
     {
         Patrol,
-        Impact,
+        Alert,
         Attack,
-        Run,
+        Chase,
+        Charge,
+        Impact,
         Dead
     }
     public Enemy EnemyStatus;
@@ -19,7 +21,7 @@ public class EnemyAI : MonoBehaviour
     Animator Anim;
 
     [Header("玩家")]
-    public Transform CurTarget;     //玩家
+    public Transform Player;     //玩家
     public int Hp = 100;
     [Header("攻擊距離")]
     public float AttackRange = 3;   //攻擊距離
@@ -35,9 +37,10 @@ public class EnemyAI : MonoBehaviour
     float AttTimer;  //計時器
     float Distance;  //玩家與敵人之距離
     bool AttackOnce;
-    bool StopRotating;
-    
+    bool IsDead;
+    bool IsCharge;
 
+    public GameObject player;
 
     void Start()
     {
@@ -50,133 +53,139 @@ public class EnemyAI : MonoBehaviour
 
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.H))
+        //Debug.Log(Distance);
+        if (Hp <= 0)
+            EnemyStatus = Enemy.Dead;
+        if (Input.GetKeyDown(KeyCode.H))
             EnemyStatus = Enemy.Impact;
-
+        if (Player != null)
+        {
+            Distance = Vector3.Distance(transform.position, Player.position);
+        }
         switch (EnemyStatus)
         {
-            case Enemy.Patrol:
+            case Enemy.Patrol: // 巡邏
                 Vector3 relDirection = transform.InverseTransformDirection(Agent.desiredVelocity);
                 Anim.SetFloat("Move", relDirection.z, 0.5f, Time.deltaTime);
 
                 if (!Agent.pathPending && Agent.remainingDistance < AttackRange)
                     Patrol();
                 break;
-            case Enemy.Impact:
-                ImpactHandler();
+            case Enemy.Alert: //警戒
+                Alert();
                 break;
-            case Enemy.Attack:
-                AttackHandler();
+            case Enemy.Attack: //攻擊
+                Attack();
                 break;
-            case Enemy.Run:
-                MovementHandler();
+            case Enemy.Chase: //追擊
+                Chasing();
                 break;
-            case Enemy.Dead:
-                Anim.SetBool("Dead",true);
+            case Enemy.Charge: //突刺
+                Charge();
+                break;
+            case Enemy.Impact: //受擊
+                Impact();
+                break;
+            case Enemy.Dead: // 死亡
+                if (!IsDead)
+                {
+                    Anim.SetTrigger("Dead");
+                    IsDead = true;
+                }
                 break;
             default:
                 break;
         }
     }
-    //移動判定
-    void MovementHandler()
+    //追擊
+    void Chasing()
     {
-        if (CurTarget != null)
+        Anim.SetBool("LeftMove", false);
+        
+        //導航至玩家
+        Agent.SetDestination(Player.position);
+        //移動動畫
+        Vector3 relDirection = transform.InverseTransformDirection(Agent.desiredVelocity);
+        Anim.SetFloat("Move", relDirection.z, 0.5f, Time.deltaTime);
+
+        //敵人跟玩家之間的距離
+        //Distance = Vector3.Distance(transform.position, CurTarget.position);
+
+        if (Distance <= 4)
         {
-            //轉向玩家
-            Vector3 dir = CurTarget.position - transform.position;
-            Quaternion targetRot = Quaternion.LookRotation(dir);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * 5);
-
-            //導航至玩家
-            Agent.SetDestination(CurTarget.position);
-            //移動動畫
-            Vector3 relDirection = transform.InverseTransformDirection(Agent.desiredVelocity);
-            Anim.SetFloat("Move", relDirection.z, 0.5f, Time.deltaTime);
-
-            //敵人跟玩家之間的距離
-            Distance = Vector3.Distance(transform.position, CurTarget.position);
-
-            if (Distance <= AttackRange)
-            {
-                AttTimer += Time.deltaTime;
-                if (AttTimer > AttackRate)
-                {
-                    AttTimer = 0;
-                    EnemyStatus = Enemy.Attack;
-                }
-            }
+            EnemyStatus = Enemy.Attack;
         }
     }
-    //攻擊判定
-    void AttackHandler()
-    {            
+    
+    //攻擊
+    void Attack()
+    {
         //敵人跟玩家之間的距離
-        Distance = Vector3.Distance(transform.position, CurTarget.position);
+        //Distance = Vector3.Distance(transform.position, CurTarget.position);
 
-        if (Distance > AttackRange)
-        {
-            EnemyStatus = Enemy.Run;
-        }
-        /*if (distance < 0.8f )
-        {
-            int a = Random.Range(0, 11);
-            if(a < 2)
-            Anim.SetTrigger("Backward");
-        }*/
-        if (!StopRotating)
-        {
-            Vector3 dir = CurTarget.position - transform.position;
-            Quaternion targetRot = Quaternion.LookRotation(dir);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * 5);
+        #region 看著玩家
+        Vector3 dir = Player.position - transform.position;
+        Quaternion targetRot = Quaternion.LookRotation(dir);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * 5);
+        float angle = Vector3.Angle(transform.forward, dir);
+        #endregion
 
-            float angle = Vector3.Angle(transform.forward, dir);
-            //敵人面向玩家角度小於6時
-            if (angle < 6)
+        if (Distance > 4)
+        {
+            int ChargeProbability = Random.Range(1, 11);
+            if (ChargeProbability < 10)
             {
-                if (!AttackOnce)
-                {
-                    Agent.isStopped = true;
-                    int i = Random.Range(1, 5);
-                    Anim.SetTrigger("Attack" + i);
-                    StartCoroutine("CloseAttack");
-                    AttackOnce = true;
-                }
+                EnemyStatus = Enemy.Chase;
             }
+            else
+            {
+                EnemyStatus = Enemy.Charge;
+            }
+        }
+        //敵人面向玩家角度小於6 和攻擊過後
+        #region 攻擊和繞著玩家跑
+        if (angle < 6 && !AttackOnce)
+        {
+            int i = Random.Range(1, 5);
+            Anim.SetTrigger("Attack" + i);
+            StartCoroutine("CloseAttack");
+            AttackOnce = true;
         }
         else
         {
-            Vector3 dir = CurTarget.position - transform.position;
-            Quaternion targetRot = Quaternion.LookRotation(dir);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * 10);
-
+            //看著玩家繞圈
             Anim.SetBool("LeftMove",true);
         }
+        #endregion
+    }
+
+    //警戒
+    void Alert()
+    {
+        if (Player == null)
+        {
+            EnemyStatus = Enemy.Patrol;
+        }
+        else
+        {
+            Anim.SetFloat("Move", 0.4f);
+
+            Vector3 dir = Player.position - transform.position;
+            Quaternion targetRot = Quaternion.LookRotation(dir);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * 5);
+
+            if (Distance < 6)
+            {
+                EnemyStatus = Enemy.Chase;
+            }
+        }
 
     }
-    IEnumerator CloseAttack()
-    {
-        int i = Random.Range(3, 8);
-        yield return new WaitForSeconds(i);
-        //Anim.SetBool("Attack", false);
-        AttackOnce = false;
-        Agent.isStopped = false;
-        StopRotating = false;
-        Anim.SetBool("LeftMove", false);
-    }
-    //受擊判定
-    void ImpactHandler()
-    {
-        Anim.SetTrigger("Hit");
-        if (Hp == 0)
-            EnemyStatus = Enemy.Dead;
-        else
-            Hp -= 10;
-            EnemyStatus = Enemy.Patrol;
-    }
+    
     //巡邏
     void Patrol()
     {
+        Anim.SetBool("LeftMove", false);
         if (points.Length > AttackRange)
             return;
 
@@ -184,16 +193,51 @@ public class EnemyAI : MonoBehaviour
         DestPoint = (DestPoint + 1) % points.Length;
 
     }
+    
+    //突刺
+    void Charge()
+    {
+        Anim.SetBool("LeftMove", false);
+
+        //Distance = Vector3.Distance(transform.position, CurTarget.position);
+
+        if (Distance < 5)
+        {
+
+            //Agent.angularSpeed = 0;
+            //Anim.SetTrigger("Attack6");
+            //if (Anim.GetCurrentAnimatorStateInfo(0).IsName("Attack6"))
+            //{
+            //    Agent.angularSpeed = 360;
+            //    EnemyStatus = Enemy.Attack;
+            //}
+        }
+    }
+
+    //受擊
+    void Impact()
+    {
+        Anim.SetTrigger("Hit");
+        Hp -= 10;
+        Player = player.transform;
+        EnemyStatus = Enemy.Chase;
+    }
     //動畫事件
     public void AttackEventsStart()
     {
-        StopRotating = true;
         DamageCollider.GetComponent<BoxCollider>().enabled = true;
     }
     public void AttackEventsEnd()
     {
-        StopRotating = true;
         DamageCollider.GetComponent<BoxCollider>().enabled = false;
+    }
+
+    //重置動畫判定
+    IEnumerator CloseAttack()
+    {
+        yield return new WaitForSeconds(Random.Range(3, 6));
+        AttackOnce = false;
+        Anim.SetBool("LeftMove", false);
     }
 
 }

@@ -18,12 +18,18 @@ public class EnemySight : MonoBehaviour
     }
     private void OnTriggerEnter(Collider other)
     {
-        if (AI.CurTarget == null)
+        
         if(other.CompareTag("Player"))
         {
-                AI.CurTarget = other.transform;
-                AI.EnemyStatus = EnemyAI.Enemy.Run;
+            AI.Player = other.transform;
+            AI.EnemyStatus = EnemyAI.Enemy.Alert;
 
-            }
+        }
+    }
+    private void OnTriggerExit(Collider other)
+    {
+        AI.Player = null;
+        AI.EnemyStatus = EnemyAI.Enemy.Alert;
+
     }
 }
