@@ -9,6 +9,7 @@ public class EnemyDetection : MonoBehaviour
     private Collider[] SpottedPlayer; //附近的玩家
 
     EnemyAI AI;
+    public Transform PlayerLastPosition;
 
 
     void Start()
@@ -44,11 +45,14 @@ public class EnemyDetection : MonoBehaviour
                 if (info.collider == SpottedPlayer[i]) //如果途中無其他障礙物，那麼射線就會碰撞到玩家
                 {
                     DiscoveredPlayer(SpottedPlayer[i]);
+                    PlayerLastPosition.position  = PlayerPosition;
+                    print("看到了");
                 }
                 else
                 {
                     //玩家離開視線範圍 放棄追逐
                     AI.Player = null;
+                    print("跨謀");
                 }
             }
         }

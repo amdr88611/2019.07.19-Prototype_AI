@@ -5,10 +5,12 @@ using UnityEngine;
 public class EnemySight : MonoBehaviour
 {
     EnemyAI AI;
+    SphereCollider Col;
 
     void Start()
     {
-        AI = GetComponentInParent<EnemyAI>();   
+        AI = GetComponentInParent<EnemyAI>();
+        Col = GetComponent<SphereCollider>();
     }
 
  
@@ -21,6 +23,7 @@ public class EnemySight : MonoBehaviour
         
         if(other.CompareTag("Player"))
         {
+            Col.radius = 10; //Trigger範圍變大
             AI.Player = other.transform;
             AI.EnemyStatus = EnemyAI.Enemy.Alert;
 
@@ -28,8 +31,11 @@ public class EnemySight : MonoBehaviour
     }
     private void OnTriggerExit(Collider other)
     {
-        AI.Player = null;
-        AI.EnemyStatus = EnemyAI.Enemy.Alert;
-
+        if (other.CompareTag("Player"))
+        {
+            Col.radius = 3;//Trigger範圍回到原本
+            AI.Player = null;
+            AI.EnemyStatus = EnemyAI.Enemy.Alert;
+        }
     }
 }
