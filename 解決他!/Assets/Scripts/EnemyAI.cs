@@ -26,6 +26,12 @@ public class EnemyAI : MonoBehaviour
     [Header("玩家")]
     public Transform Player;     //玩家
     public int Hp = 100;
+    [Header("警戒距離")]
+    public float AlertRange;
+    [Header("追擊距離")]
+    public float ChaseRange;
+    [Header("跳斬距離")]
+    public float ChargeRange;
     [Header("攻擊距離")]
     public float AttackRange = 3;   //攻擊距離
     [Range(4,10)]
@@ -249,13 +255,16 @@ public class EnemyAI : MonoBehaviour
     //巡邏
     void Patrol()
     {
-        Anim.SetBool("LeftMove", false);
-        HearingZone.radius = 3f;
-        if (points.Length > AttackRange)
-            return;
+        if (!IsDead)
+        {
+            Anim.SetBool("LeftMove", false);
+            HearingZone.radius = 3f;
+            if (points.Length > AttackRange)
+                return;
 
-        Agent.destination = points[DestPoint].position;
-        DestPoint = (DestPoint + 1) % points.Length;
+            Agent.destination = points[DestPoint].position;
+            DestPoint = (DestPoint + 1) % points.Length;
+        }
     }
 
     //受擊
