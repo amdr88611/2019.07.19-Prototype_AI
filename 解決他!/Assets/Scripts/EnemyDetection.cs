@@ -26,6 +26,7 @@ public class EnemyDetection : MonoBehaviour
     {
         //OverlapSphere内的敵人
         SpottedPlayer = Physics.OverlapSphere(transform.position, EyeViewDistance, LayerMask.GetMask("Player"));
+        
         for (int i = 0; i < SpottedPlayer.Length; i++) //檢測玩家(Layer)是否在視野區中
         {
             Vector3 PlayerPosition = SpottedPlayer[i].transform.position; //玩家的位置
@@ -48,17 +49,16 @@ public class EnemyDetection : MonoBehaviour
                     PlayerLastPosition.position  = PlayerPosition;
                     print("看到了");
                 }
-                else
+                else 
                 {
-                    //玩家離開視線範圍 放棄追逐
                     AI.Player = null;
+                    //玩家離開視線範圍 放棄追逐
                     print("跨謀");
                 }
             }
         }
     }
 
-    //DiscoveredPlayer和GiveUpChasing可以統整為一個function 一個進入一個離開
 
     void DiscoveredPlayer(Collider Player) //發現玩家
     {
@@ -68,4 +68,5 @@ public class EnemyDetection : MonoBehaviour
             AI.EnemyStatus = EnemyAI.Enemy.Alert;
         }
     }
+
 }

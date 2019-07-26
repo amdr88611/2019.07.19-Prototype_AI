@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 980e16f2ad312d545ac976c5ddf58841
+guid: a82766627db85c0468e1047406980611
 ModelImporter:
   serializedVersion: 23
   fileIDToRecycleName:
@@ -139,7 +139,7 @@ ModelImporter:
     400130: Spine2
     400132: //RootNode
     400134: Sword_joint
-    7400000: Starburst
+    7400000: SecondStage
     9500000: //RootNode
   externalObjects: {}
   materials:
@@ -170,10 +170,10 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Starburst
+      name: SecondStage
       takeName: mixamo.com
       firstFrame: 0
-      lastFrame: 109
+      lastFrame: 23
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -193,57 +193,15 @@ ModelImporter:
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
       events:
-      - time: 0.18278466
-        functionName: AttackEventsStart
+      - time: 0.11699164
+        functionName: SecondStageStart
         data: 
         objectReferenceParameter: {instanceID: 0}
         floatParameter: 0
         intParameter: 0
         messageOptions: 0
-      - time: 0.23160173
-        functionName: AttackEventsEnd
-        data: 
-        objectReferenceParameter: {instanceID: 0}
-        floatParameter: 0
-        intParameter: 0
-        messageOptions: 0
-      - time: 0.29305914
-        functionName: AttackEventsStart
-        data: 
-        objectReferenceParameter: {instanceID: 0}
-        floatParameter: 0
-        intParameter: 0
-        messageOptions: 0
-      - time: 0.32904884
-        functionName: AttackEventsEnd
-        data: 
-        objectReferenceParameter: {instanceID: 0}
-        floatParameter: 0
-        intParameter: 0
-        messageOptions: 0
-      - time: 0.46786633
-        functionName: AttackEventsStart
-        data: 
-        objectReferenceParameter: {instanceID: 0}
-        floatParameter: 0
-        intParameter: 0
-        messageOptions: 0
-      - time: 0.51780957
-        functionName: AttackEventsEnd
-        data: 
-        objectReferenceParameter: {instanceID: 0}
-        floatParameter: 0
-        intParameter: 0
-        messageOptions: 0
-      - time: 0.6915167
-        functionName: AttackEventsStart
-        data: 
-        objectReferenceParameter: {instanceID: 0}
-        floatParameter: 0
-        intParameter: 0
-        messageOptions: 0
-      - time: 0.74807197
-        functionName: AttackEventsEnd
+      - time: 0.8847926
+        functionName: SecondStageEnd
         data: 
         objectReferenceParameter: {instanceID: 0}
         floatParameter: 0

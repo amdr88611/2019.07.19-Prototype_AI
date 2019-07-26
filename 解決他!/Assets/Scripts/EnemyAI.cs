@@ -13,15 +13,17 @@ public class EnemyAI : MonoBehaviour
         Chase,
         Charge,
         Impact,
+        SecondStage,
         Dead
     }
     public Enemy EnemyStatus;
 
     EnemyDetection EnemyDetection;
-    NavMeshAgent Agent; //導航
+    public NavMeshAgent Agent; //導航
     Animator Anim;
     CapsuleCollider EnemyCollider;
     SphereCollider HearingZone;
+    ParticleSystem SecondStageStand;
 
     [Header("玩家")]
     public Transform Player;     //玩家
@@ -33,34 +35,41 @@ public class EnemyAI : MonoBehaviour
     [Header("跳斬距離")]
     public float ChargeRange;
     [Header("攻擊距離")]
-    public float AttackRange = 3;   //攻擊距離
+    public float AttackRange;   //攻擊距離
     [Range(4,10)]
     [Header("攻擊頻率")]
     public int AttackRate;    //攻擊頻率
     [Header("敵人攻擊判定")]
-    public GameObject DamageCollider;
+    public GameObject DamageCollider1;
+    public GameObject DamageCollider2;
     [Header("巡邏地點")]
     public Transform[] points;
     private int DestPoint = 0; //巡邏順位
 
 
     float Distance;  //玩家與敵人之距離
+    int AttackCombo;
     bool AttackOnce;
     bool IsDead;
     bool IsCharge;
+    public  bool IsSecondStage;
+    bool SecondStage;
 
-    public GameObject player;
 
-    public GameObject b,b2;
+    public GameObject b;
 
     void Start()
     {
-        EnemyDetection = GetComponent<EnemyDetection>();
-        Agent = GetComponent<NavMeshAgent>();
+        
         Anim = GetComponent<Animator>();
+        Agent = GetComponent<NavMeshAgent>();
+        EnemyDetection = GetComponent<EnemyDetection>();
+        EnemyCollider = GetComponent<CapsuleCollider>();
+        SecondStageStand = GetComponent<ParticleSystem>();
+
         HearingZone = GameObject.FindGameObjectWithTag("HearingZone").GetComponent<SphereCollider>();
         Agent.stoppingDistance = AttackRange;
-        EnemyCollider = GetComponent<CapsuleCollider>();
+        AttackCombo = 5;
         IsCharge = false;
         //Patrol();
     }
@@ -68,18 +77,19 @@ public class EnemyAI : MonoBehaviour
 
     void Update()
     {
-        if (Hp <= 50)
+       print(Agent.hasPath);
+        if (Hp <= 50 && !SecondStage)
         {
-            b.SetActive(true);
-            b2.SetActive(true);
+            EnemyStatus = Enemy.SecondStage;
         }
 
         if (Hp <= 0)
         {
+            Anim.SetBool("Dead", true);
             EnemyStatus = Enemy.Dead;
         }
 
-        if (Input.GetKeyDown(KeyCode.H)&& Hp >0)
+        if (Input.GetKeyDown(KeyCode.H)&& Hp >0 && !IsSecondStage)
         { 
             Hp -= 10;
             EnemyStatus = Enemy.Impact;
@@ -87,16 +97,20 @@ public class EnemyAI : MonoBehaviour
         }
         if (Player != null)
         {
+            //敵人和玩家之間的距離
             Distance = Vector3.Distance(transform.position, Player.position);
         }
         switch (EnemyStatus)
         {
             case Enemy.Patrol: // 巡邏
-                Vector3 relDirection = transform.InverseTransformDirection(Agent.desiredVelocity);
-                Anim.SetFloat("Move", relDirection.z, 0.5f, Time.deltaTime);
+                if (!IsDead)
+                {
+                    Vector3 relDirection = transform.InverseTransformDirection(Agent.desiredVelocity);
+                    Anim.SetFloat("Move", relDirection.z, 0.5f, Time.deltaTime);
 
-                if (!Agent.pathPending && Agent.remainingDistance < AttackRange)
-                    Patrol();
+                    if (!Agent.pathPending && Agent.remainingDistance < AttackRange)
+                        Patrol();
+                }
                 break;
             case Enemy.Alert: //警戒
                 Alert();
@@ -113,13 +127,16 @@ public class EnemyAI : MonoBehaviour
             case Enemy.Impact: //受擊
                 Impact();
                 break;
+            case Enemy.SecondStage: //進入第二階段
+                SwitchSecondStage();
+                break;
             case Enemy.Dead: // 死亡
                 if (!IsDead)
                 {
-                    Anim.SetBool("Dead",true);
-                    Agent.SetDestination(transform.position );
+                    SecondStageStand.Stop();
                     IsDead = true;
                     EnemyCollider.enabled = false;
+
                 }
                 break;
             default:
@@ -137,14 +154,14 @@ public class EnemyAI : MonoBehaviour
         }
         else
         {
+            
             //導航至玩家
             Agent.SetDestination(EnemyDetection.PlayerLastPosition.position);
             //移動動畫
             Vector3 relDirection = transform.InverseTransformDirection(Agent.desiredVelocity);
             Anim.SetFloat("Move", relDirection.z,0.8f, Time.deltaTime);
-
-
-            if (Distance <= 3)
+            
+            if(Distance <= AttackRange)
             {
                 EnemyStatus = Enemy.Attack;
             }
@@ -167,9 +184,9 @@ public class EnemyAI : MonoBehaviour
             Anim.SetFloat("Move", relDirection.z, 0.8f, Time.deltaTime);
 
 
-            if (Distance < 4 && !IsCharge)
+            if (Distance < ChargeRange/*4*/ && !IsCharge)
             {
-                Anim.SetTrigger("Attack6");
+                Anim.SetTrigger("Charge");
                 IsCharge = true;
             }
         }
@@ -186,6 +203,7 @@ public class EnemyAI : MonoBehaviour
         }
         else
         {
+
             Vector3 relDirection = transform.InverseTransformDirection(Agent.desiredVelocity);
             Anim.SetFloat("Move", relDirection.z, 0f, Time.deltaTime);
 
@@ -193,10 +211,10 @@ public class EnemyAI : MonoBehaviour
             Vector3 dir = Player.position - transform.position;
             Quaternion targetRot = Quaternion.LookRotation(dir);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * 5);
-            float angle = Vector3.Angle(transform.forward, dir);
+            //float angle = Vector3.Angle(transform.forward, dir);
             #endregion
 
-            if (Distance > 4)
+            if (Distance > ChargeRange/*4*/)
             {
                 int ChargeProbability = Random.Range(1, 11);
                 if (ChargeProbability < 8)
@@ -209,13 +227,13 @@ public class EnemyAI : MonoBehaviour
                     EnemyStatus = Enemy.Charge;
                 }
             }
-            //敵人面向玩家角度小於6 和攻擊過後
             #region 攻擊和繞著玩家跑
+            //敵人面向玩家角度小於6 和攻擊過後
             if (/*angle < 6 &&*/ !AttackOnce)
             {
-                int i = Random.Range(1, 5);
+                int i = Random.Range(1, AttackCombo);
                 Anim.SetTrigger("Attack" + i);
-                StartCoroutine("CloseAttack");
+                StartCoroutine(CloseAttack());
                 AttackOnce = true;
             }
             else
@@ -240,11 +258,11 @@ public class EnemyAI : MonoBehaviour
             Anim.SetFloat("Move", 0.4f);
             Agent.SetDestination(EnemyDetection.PlayerLastPosition.position);
 
-            if (Distance < 6 )
+            if (Distance < ChaseRange/*6*/)
             {
                 EnemyStatus = Enemy.Chase;
             }
-            else if (Distance >= 11)
+            else if (Distance >= AlertRange/*11*/)
             {
                 Player = null;
             }
@@ -264,6 +282,7 @@ public class EnemyAI : MonoBehaviour
 
             Agent.destination = points[DestPoint].position;
             DestPoint = (DestPoint + 1) % points.Length;
+            
         }
     }
 
@@ -271,22 +290,60 @@ public class EnemyAI : MonoBehaviour
     void Impact()
     {
         EnemyStatus = Enemy.Chase;
+        HearingZone.radius = 10f;
+    }
+
+    void SwitchSecondStage()
+    {
+        if (!SecondStage)
+        {
+            IsSecondStage = true;
+            EnemyStatus = Enemy.SecondStage;
+            Agent.SetDestination(transform.position);
+            print("進入第二階段");
+            Anim.SetTrigger("SecondStage");
+            SecondStage = true;
+        }
     }
 
     //動畫事件 攻擊判定
     public void AttackEventsStart()
     {
-        DamageCollider.GetComponent<BoxCollider>().enabled = true;
+        DamageCollider1.GetComponent<BoxCollider>().enabled = true;
+        if (SecondStage)
+            DamageCollider2.GetComponent<BoxCollider>().enabled = true;
     }
     public void AttackEventsEnd()
     {
-        DamageCollider.GetComponent<BoxCollider>().enabled = false;
+        DamageCollider1.GetComponent<BoxCollider>().enabled = false;
+        if (SecondStage)
+            DamageCollider2.GetComponent<BoxCollider>().enabled = false;
     }
-
     //突擊動畫事件
     public void ChargeEnd()
     {
         EnemyStatus = Enemy.Attack;
+    }
+    //第二階段動畫事件
+    public void Stand()
+    {
+        SecondStageStand.Play();
+    }
+    public void SecondStageStart()
+    {
+        b.SetActive(true);
+    }
+    public void SecondStageEnd()
+    {
+        AttackCombo = 7;
+        AttackRate = 5;
+        EnemyStatus = Enemy.Attack;
+        HearingZone.radius = 10f;
+        IsSecondStage = false;
+    }
+    public void LookAtPlayer()
+    {
+        transform.LookAt(Player.transform.position);
     }
 
     //重置判定

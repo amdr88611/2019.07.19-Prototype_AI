@@ -6,27 +6,26 @@ public class EnemySight : MonoBehaviour
 {
     EnemyAI AI;
     SphereCollider Col;
+    EnemyDetection Ed;
 
     void Start()
     {
         AI = GetComponentInParent<EnemyAI>();
         Col = GetComponent<SphereCollider>();
+        Ed = GetComponentInParent<EnemyDetection>();
     }
 
- 
-    void Update()
-    {
-        
-    }
     private void OnTriggerEnter(Collider other)
     {
-        
-        if(other.CompareTag("Player"))
-        {
-            Col.radius = 10; //Trigger範圍變大
-            AI.Player = other.transform;
-            AI.EnemyStatus = EnemyAI.Enemy.Alert;
+        AI.EnemyStatus = EnemyAI.Enemy.Alert;
+    }
+    private void OnTriggerStay(Collider other)
+    {
 
+        if (other.CompareTag("Player"))
+        {
+            Col.radius = 3; //Trigger範圍變大
+            AI.Player = other.transform;
         }
     }
     private void OnTriggerExit(Collider other)
