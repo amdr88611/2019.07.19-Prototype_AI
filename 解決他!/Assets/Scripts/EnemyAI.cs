@@ -46,13 +46,19 @@ public class EnemyAI : MonoBehaviour
     public Transform[] points;
     private int DestPoint = 0; //巡邏順位
 
-
-    float Distance;  //玩家與敵人之距離
-    int AttackCombo;
+    [Header("是否進入第二階段")]
+    public bool IsSecondStage;
+    [Header("是否發現玩家")]
+    public bool IsFindPlayer;
     bool AttackOnce;
     bool IsDead;
     bool IsCharge;
-    public  bool IsSecondStage;
+
+    float Distance;  //玩家與敵人之距離
+
+    int AttackCombo;
+
+
     bool SecondStage;
 
 
@@ -71,13 +77,13 @@ public class EnemyAI : MonoBehaviour
         Agent.stoppingDistance = AttackRange;
         AttackCombo = 5;
         IsCharge = false;
-        //Patrol();
+        EnemyStatus = Enemy.Patrol;
     }
 
 
     void Update()
     {
-       print(Agent.hasPath);
+       print(IsFindPlayer);
         if (Hp <= 50 && !SecondStage)
         {
             EnemyStatus = Enemy.SecondStage;
@@ -89,7 +95,7 @@ public class EnemyAI : MonoBehaviour
             EnemyStatus = Enemy.Dead;
         }
 
-        if (Input.GetKeyDown(KeyCode.H)&& Hp >0 && !IsSecondStage)
+        if (Input.GetKeyDown(KeyCode.Y)&& Hp >0 && !IsSecondStage)
         { 
             Hp -= 10;
             EnemyStatus = Enemy.Impact;
@@ -152,19 +158,26 @@ public class EnemyAI : MonoBehaviour
         {
             EnemyStatus = Enemy.Patrol;
         }
-        else
+        else if (IsFindPlayer)
         {
-            
             //導航至玩家
-            Agent.SetDestination(EnemyDetection.PlayerLastPosition.position);
+            Agent.SetDestination(Player.position);
             //移動動畫
             Vector3 relDirection = transform.InverseTransformDirection(Agent.desiredVelocity);
-            Anim.SetFloat("Move", relDirection.z,0.8f, Time.deltaTime);
-            
-            if(Distance <= AttackRange)
+            Anim.SetFloat("Move", relDirection.z, 0.8f, Time.deltaTime);
+
+            if (Distance <= AttackRange)
             {
                 EnemyStatus = Enemy.Attack;
             }
+        }
+        else if (!IsFindPlayer)
+        {
+            //導航至玩家最後位置
+            Agent.SetDestination(EnemyDetection.PlayerLastPosition.position);
+            //移動動畫
+            Vector3 relDirection = transform.InverseTransformDirection(Agent.desiredVelocity);
+            Anim.SetFloat("Move", relDirection.z, 0.8f, Time.deltaTime);
         }
     }
     
@@ -176,11 +189,12 @@ public class EnemyAI : MonoBehaviour
         {
             EnemyStatus = Enemy.Chase;
         }
-        else
+        else if (IsFindPlayer)
+
         {
+            Agent.SetDestination(Player.position);
             //移動動畫
             Vector3 relDirection = transform.InverseTransformDirection(Agent.desiredVelocity);
-            Agent.SetDestination(EnemyDetection.PlayerLastPosition.position);
             Anim.SetFloat("Move", relDirection.z, 0.8f, Time.deltaTime);
 
 
@@ -190,9 +204,16 @@ public class EnemyAI : MonoBehaviour
                 IsCharge = true;
             }
         }
+        else if (!IsFindPlayer)
+        {
+            Agent.SetDestination(EnemyDetection.PlayerLastPosition.position);
+
+            Vector3 relDirection = transform.InverseTransformDirection(Agent.desiredVelocity);
+            Anim.SetFloat("Move", relDirection.z, 0.8f, Time.deltaTime);
+        }
 
     }
-    
+
     //攻擊
     void Attack()
     {
@@ -253,10 +274,10 @@ public class EnemyAI : MonoBehaviour
         {
             EnemyStatus = Enemy.Patrol;
         }
-        else
+        else if(IsFindPlayer)
         {
             Anim.SetFloat("Move", 0.4f);
-            Agent.SetDestination(EnemyDetection.PlayerLastPosition.position);
+            Agent.SetDestination(Player.position);
 
             if (Distance < ChaseRange/*6*/)
             {
@@ -267,9 +288,14 @@ public class EnemyAI : MonoBehaviour
                 Player = null;
             }
         }
+        else if (!IsFindPlayer)
+        {
+            Agent.SetDestination(EnemyDetection.PlayerLastPosition.position);
+            AlertToPatrol();
+        }
 
     }
-    
+
     //巡邏
     void Patrol()
     {
@@ -327,14 +353,17 @@ public class EnemyAI : MonoBehaviour
     //第二階段動畫事件
     public void Stand()
     {
+        EnemyCollider.enabled = false;
         SecondStageStand.Play();
     }
     public void SecondStageStart()
     {
         b.SetActive(true);
+
     }
     public void SecondStageEnd()
     {
+        EnemyCollider.enabled = true;
         AttackCombo = 7;
         AttackRate = 5;
         EnemyStatus = Enemy.Attack;
@@ -353,6 +382,12 @@ public class EnemyAI : MonoBehaviour
         yield return new WaitForSeconds(Random.Range(3, AttackRate));
         Anim.SetBool("LeftMove", false);
         AttackOnce = false;
+    }
+    IEnumerator AlertToPatrol()
+    {
+        yield return new WaitForSeconds(3);
+        Player = null;
+        EnemyStatus = Enemy.Patrol;
     }
 
 

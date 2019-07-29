@@ -24,8 +24,9 @@ public class EnemySight : MonoBehaviour
 
         if (other.CompareTag("Player"))
         {
-            Col.radius = 3; //Trigger範圍變大
+            Col.radius = 9; //Trigger範圍變大
             AI.Player = other.transform;
+            AI.IsFindPlayer = true;
         }
     }
     private void OnTriggerExit(Collider other)
@@ -33,7 +34,9 @@ public class EnemySight : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             Col.radius = 3;//Trigger範圍回到原本
-            AI.Player = null;
+            AI.IsFindPlayer = false;
+
+            //AI.Player = null;
             AI.EnemyStatus = EnemyAI.Enemy.Alert;
         }
     }
